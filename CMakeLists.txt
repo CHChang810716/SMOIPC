@@ -13,7 +13,7 @@ HunterGate(
     FILEPATH ${CMAKE_CURRENT_LIST_DIR}/cmake/hunter_config.cmake
 )
 
-project(CppProjectTemplate
+project(OPSISM
     LANGUAGES C CXX 
     VERSION 0.1.0.0
 )

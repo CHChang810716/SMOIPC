@@ -1,2 +1,2 @@
-# CppProjectTemplate
-C++ CMake project template
+# OPSISM
+On process service invoke by shared memory
