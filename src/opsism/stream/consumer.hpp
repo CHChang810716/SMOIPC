@@ -15,6 +15,7 @@ struct Consumer {
     {}
 
     T consume() {
+        return transmitter_.get_one();
     }
 
 private:
