@@ -1,14 +1,17 @@
 #pragma once
 #include <boost/circular_buffer.hpp>
 #include <opsism/allocator.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
 namespace opsism::stream {
 
 template<class T>
 struct Buffer {
-    friend struct Consumer<T>;
-    friend struct Producer<T>;
+    friend struct FwdConsumer<T>;
+    friend struct FwdProducer<T>;
 protected:
-    boost::circular_buffer<T, Allocator<T>> inter_;
+    boost::lockfree::spsc_queue<
+        T, boost::lockfree::capacity<1000>
+    > inter_;
 };
 
 }
