@@ -2,11 +2,11 @@
 #include "buffer.hpp"
 namespace opsism::stream {
 
-template<class T>
+template<class T, std::size_t buffered_obj_num = 1000>
 struct FwdProducer {
-    using ShBuf = Buffer<T>;
+    using ShBuf = Buffer<T, buffered_obj_num>;
 
-    Producer(ShBuf* buffer)
+    FwdProducer(ShBuf* buffer)
     : shared_buffer_( buffer )
     {}
 
@@ -17,5 +17,10 @@ struct FwdProducer {
 private:
     ShBuf*              shared_buffer_      ;
 };
+
+template<class T, std::size_t buffered_obj_num>
+auto make_fwd_producer(Buffer<T, buffered_obj_num>* buffer) {
+    return FwdProducer<T, buffered_obj_num>(buffer);
+}
 
 }

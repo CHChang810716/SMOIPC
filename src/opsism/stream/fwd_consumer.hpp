@@ -2,11 +2,11 @@
 #include "buffer.hpp"
 namespace opsism::stream {
 
-template<class T>
+template<class T, std::size_t buffered_obj_num = 1000>
 struct FwdConsumer {
-    using ShBuf = Buffer<T>;
+    using ShBuf = Buffer<T, buffered_obj_num>;
 
-    Consumer(ShBuf* buffer)
+    FwdConsumer(ShBuf* buffer)
     : shared_buffer_    ( buffer )
     {}
 
@@ -17,5 +17,10 @@ struct FwdConsumer {
 private:
     ShBuf*                      shared_buffer_  ;
 };
+
+template<class T, std::size_t buffered_obj_num>
+auto make_fwd_consumer(Buffer<T, buffered_obj_num>* buffer) {
+    return FwdConsumer<T, buffered_obj_num>(buffer);
+}
 
 }
