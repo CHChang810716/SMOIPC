@@ -8,7 +8,7 @@ set(
     "Hunter cache servers"
 )
 HunterGate(
-    URL "git@github.com:CHChang810716/hunter.git"
+    URL "https://github.com/CHChang810716/hunter.git"
     SHA1 b476e026c5e6a5b81e27e1e2a7d62d92e2d28d90
     FILEPATH ${CMAKE_CURRENT_LIST_DIR}/cmake/hunter_config.cmake
 )
