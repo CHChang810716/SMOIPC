@@ -1,7 +1,7 @@
 environment:
   matrix:
   - GENERATOR: MinGW Makefiles
-  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 #     platform: x64
 
 configuration: Debug
@@ -23,7 +23,7 @@ before_build:
   - cd build
   - cmake .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -G "%GENERATOR%" -DCMAKE_INSTALL_PREFIX="../stage"
 
-build_script: cmake --build . --config %CONFIGURATION%
+build_script: cmake --build . --config %CONFIGURATION% --target install
 
 test_script: 
   - ctest

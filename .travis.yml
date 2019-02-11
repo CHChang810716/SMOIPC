@@ -32,5 +32,5 @@ script:
   - mkdir build
   - cd build
   - ${DEPS_DIR}/cmake/bin/cmake .. -DCMAKE_INSTALL_PREFIX="../stage" -DBUILD_TEST="ON" 
-  - ${DEPS_DIR}/cmake/bin/cmake --build . --target install
+  - ${DEPS_DIR}/cmake/bin/cmake --build . --target install -- VERBOSE=1
   - ctest
