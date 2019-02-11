@@ -18,3 +18,5 @@ find_package(Boost CONFIG COMPONENTS
 
     REQUIRED
 )
+
+include(cmake/packages_ext.cmake)
