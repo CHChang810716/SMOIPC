@@ -1,0 +1,29 @@
+environment:
+  matrix:
+  - GENERATOR: MinGW Makefiles
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#     platform: x64
+
+configuration: Debug
+
+# clone_script:
+#   - git clone -q --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
+#   - cd %APPVEYOR_BUILD_FOLDER%
+#   - git checkout -qf %APPVEYOR_REPO_COMMIT%
+#   - git submodule update --init --recursive
+
+before_build:
+  - rm -rf build
+  - rm -rf stage
+  - git submodule init
+  - git submodule update
+  - set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
+  - set PATH=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\bin;%PATH%
+  - mkdir build
+  - cd build
+  - cmake .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -G "%GENERATOR%" -DCMAKE_INSTALL_PREFIX="../stage"
+
+build_script: cmake --build . --config %CONFIGURATION%
+
+test_script: 
+  - ctest
