@@ -20,13 +20,14 @@ install:
 before_build:
   - dir C:\mingw-w64\
   - dir C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\
+  - dir C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64
   - rm -rf build
   - rm -rf stage
   - set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
-  - set PATH=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\bin;%PATH%
+  - set PATH=C:\mingw-w64\x86_64-7.3.0-posix-seh-rt_v5-rev0\mingw64\bin;%PATH%
   - mkdir build
   - cd build
-  - cmake .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -G "%GENERATOR%" -DCMAKE_INSTALL_PREFIX="../stage" -DCMAKE_C_COMPILER="C:/mingw-w64/x86_64-7.3.0-posix-seh-rt_v5-rev0/bin/gcc" -DCMAKE_CXX_COMPILER="C:/mingw-w64/x86_64-7.3.0-posix-seh-rt_v5-rev0/bin/g++"
+  - cmake .. -DCMAKE_BUILD_TYPE=%CONFIGURATION% -G "%GENERATOR%" -DCMAKE_INSTALL_PREFIX="../stage"
 
 build_script: cmake --build . --config %CONFIGURATION% --target install
 
