@@ -1,4 +1,4 @@
-include(cmake/scheme/test.cmake)
+include(cmake/scheme/exe.cmake)
 target_link_libraries(${AKT_TARGET} PRIVATE Boost::system)
 if(WIN32)
     target_link_libraries(${AKT_TARGET} PRIVATE ws2_32)
