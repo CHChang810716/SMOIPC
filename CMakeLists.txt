@@ -17,6 +17,10 @@ project(OPSISM
     LANGUAGES C CXX 
     VERSION 0.1.0.0
 )
+set(CMAKE_CXX_STANDARD 17)
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "-fno-new-ttp-matching")
+endif()
 option(BUILD_TEST   "Build project with test"   OFF)
 option(INSTALL_DEPS "Install dependensies"      OFF)
 

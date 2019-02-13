@@ -1,0 +1,1 @@
+target_link_libraries(${AKT_TARGET} PRIVATE Threads::Threads)

@@ -1,26 +1,24 @@
 #pragma once
-#include "buffer.hpp"
 namespace opsism::stream {
 
-template<class T, std::size_t buffered_obj_num = 1000>
+template<class ShBuf>
 struct FwdConsumer {
-    using ShBuf = Buffer<T, buffered_obj_num>;
-
+    using Element = typename ShBuf::Element;
     FwdConsumer(ShBuf* buffer)
     : shared_buffer_    ( buffer )
     {}
 
-    bool pop(T& obj) {
-        return shared_buffer_->inter_.pop(obj);
+    bool pop(Element& obj) {
+        return shared_buffer_->pop(obj);
     }
 
 private:
     ShBuf*                      shared_buffer_  ;
 };
 
-template<class T, std::size_t buffered_obj_num>
-auto make_fwd_consumer(Buffer<T, buffered_obj_num>* buffer) {
-    return FwdConsumer<T, buffered_obj_num>(buffer);
+template<class ShBuf>
+auto make_fwd_consumer(ShBuf* buffer) {
+    return FwdConsumer<ShBuf>(buffer);
 }
 
 }

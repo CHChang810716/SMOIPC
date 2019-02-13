@@ -1,6 +1,7 @@
 #include <opsism/stream/fwd_producer.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
-using ShmIntBuffer = opsism::stream::Buffer<int>;
+#include <opsism/stream/spsc_queue.hpp>
+using ShmIntBuffer = opsism::stream::SpscQueue<int>;
 int main() {
     boost::interprocess::managed_shared_memory segment(
         boost::interprocess::open_or_create, "opsism_fwd_real_ipc_shm_test", 65536

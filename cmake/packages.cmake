@@ -18,5 +18,5 @@ find_package(Boost CONFIG COMPONENTS
 
     REQUIRED
 )
-
+find_package(Threads REQUIRED)
 include(cmake/packages_ext.cmake)
