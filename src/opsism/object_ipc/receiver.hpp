@@ -1,31 +1,74 @@
 #pragma once
+#include <tuple>
 #include <boost/asio.hpp>
-#include <vector>
-#include <functional>
+#include <opsism/tuple/fill_construct.hpp>
+#include <boost/mpl/vector.hpp>
+#include <boost/mpl/find.hpp>
+#include <opsism/utils/event.hpp>
+#include <opsism/stream/fwd_consumer.hpp>
 namespace opsism::object_ipc {
 
-template<class T>
-struct Receiver
+template<class... T>
+using ReceiverBase = std::tuple<utils::Event<T>...>;
+
+template<class MplVector>
+struct Receiver {};
+
+template<class... T>
+struct Receiver<boost::mpl::vector<T...>> 
+: public ReceiverBase<T...>
 {
-    Receiver(boost::asio::io_service& ios)
-    : ios_ (&ios)
-    {}
+    using Type = boost::mpl::vector<T...>;
+    using Base = ReceiverBase<T...>;
 
-    void trigger(T&& obj) {
-        boost::asio::post(*ios_, [
-            this, tmp = std::move(obj)
-        ]() mutable {
-            slot_(tmp);            
-        });
-    }
-    template<class Func>
-    void set_slot(Func&& func) {
-        slot_ = std::forward<Func>(func);
+    Receiver(
+        ShBuf*                                    buffer, 
+        boost::asio::io_service&                  ios, 
+        const boost::posix_time::time_duration&   intvl = boost::posix_time::millisec(50)
+    )
+    : Base            (tuple::FillConstruct<Base>::run(ios))
+    , tick_handler_   (buffer)
+    , ios_            (&ios)
+    , tick_pop_timer_ (new boost::asio::deadline_timer(ios))
+    , tick_interval_  (intvl)
+    {
+        tick_pop_timer_->expires_from_now(tick_interval_);
+        tick_pop_timer_->async_wait(tick_handler_);
     }
 
-private:
-    boost::asio::io_service*    ios_    ;
-    std::function<void(T&)>     slot_   ;
+    template<class Obj, class Func>
+    void on_received(Func&& func) {
+        using Itr = typename boost::mpl::find<Type, Obj>::type;
+        std::get<Itr::pos::value>(*this).set_slot(
+            std::forward<Func>(func)
+        );
+    }
+protected:
+    template<class Obj>
+    void receive(Obj&& obj) {
+        using Itr = typename boost::mpl::find<Type, Obj>::type;
+        std::get<Itr::pos::value>(*this).signal(std::move(obj));
+    }
+    struct TickHandler {
+        TickHandler(This* inst) 
+        : inst_(inst)
+        {}
+        void operator()(const boost::system::error_code& ec) { // tick pop
+            Packet packet;
+            if( inst_->basic_consumer_.pop(packet)) {
+                // TODO: search type id, resolve shm_ptr
+            }
+            inst_->tick_pop_timer_->expires_from_now(inst_->tick_interval_);
+            inst_->tick_pop_timer_->async_wait(*this);
+        }
+        This* inst_;
+    }                                   tick_handler_   ;
+    FwdConsumer<Packet>                 basic_consumer_ ;
+    boost::asio::io_service*            ios_            ;
+    std::unique_ptr<
+        boost::asio::deadline_timer
+    >                                   tick_pop_timer_ ;
+    boost::posix_time::time_duration    tick_interval_  ;
 };
 
 }
