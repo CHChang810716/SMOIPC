@@ -1,0 +1,6 @@
+object message {
+    size_t type_id + object size,
+    uint16 type_id,
+    nbyte object,
+    byte is_object_good(1/0)
+}

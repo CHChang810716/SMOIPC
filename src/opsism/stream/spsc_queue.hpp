@@ -1,6 +1,7 @@
 #pragma once
 #include <boost/circular_buffer.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
+#include <chrono>
 namespace opsism::stream {
 
 template<class ShBuf>
@@ -21,8 +22,6 @@ friend struct FwdConsumer<This>;
     static std::size_t required_space_lowerbound() {
         return buffered_obj_num * sizeof(T);
     }
-    bool is_producer_online {false};
-    bool is_consumer_online {false};
 };
 
 }

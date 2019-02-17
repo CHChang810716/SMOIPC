@@ -11,26 +11,30 @@ namespace opsism::object_ipc {
 template<class... T>
 using ReceiverBase = std::tuple<utils::Event<T>...>;
 
-template<class MplVector>
+template<class MplVector, std::size_t buffer_bytes>
 struct Receiver {};
 
-template<class... T>
-struct Receiver<boost::mpl::vector<T...>> 
+template<class... T, std::size_t buffer_bytes>
+struct Receiver<boost::mpl::vector<T...>, buffer_bytes> 
 : public ReceiverBase<T...>
 {
-    using Type = boost::mpl::vector<T...>;
-    using Base = ReceiverBase<T...>;
+    using Type          = boost::mpl::vector<T...>;
+    using Base          = ReceiverBase<T...>;
+    using ObjectQueue   = SpscObjectQueue<buffer_bytes>;
+    using BinQueue      = typename ObjectQueue::BinQueue;
 
     Receiver(
-        ShBuf*                                    buffer, 
+        ObjectQueue*                              buffer, 
         boost::asio::io_service&                  ios, 
         const boost::posix_time::time_duration&   intvl = boost::posix_time::millisec(50)
     )
     : Base            (tuple::FillConstruct<Base>::run(ios))
-    , tick_handler_   (buffer)
-    , ios_            (&ios)
+    , tick_handler_   (this)
+    , ios_            (ios)
     , tick_pop_timer_ (new boost::asio::deadline_timer(ios))
     , tick_interval_  (intvl)
+    , basic_consumer_ (buffer->bin_queue_)
+    , object_queue_   (buffer)
     {
         tick_pop_timer_->expires_from_now(tick_interval_);
         tick_pop_timer_->async_wait(tick_handler_);
@@ -49,6 +53,18 @@ protected:
         using Itr = typename boost::mpl::find<Type, Obj>::type;
         std::get<Itr::pos::value>(*this).signal(std::move(obj));
     }
+    void recv_byte(char& c) {
+        while(!basic_consumer_.pop(c)) {
+            ios_.poll_one();
+        }
+    }
+    void async_recv_impl() {
+        while(object_queue_->recv_object_size_ > 0) {
+            char c;
+            recv_byte(c);
+        }
+
+    }
     struct TickHandler {
         TickHandler(This* inst) 
         : inst_(inst)
@@ -62,13 +78,14 @@ protected:
             inst_->tick_pop_timer_->async_wait(*this);
         }
         This* inst_;
-    }                                   tick_handler_   ;
-    FwdConsumer<Packet>                 basic_consumer_ ;
-    boost::asio::io_service*            ios_            ;
+    }                                   tick_handler_       ;
     std::unique_ptr<
         boost::asio::deadline_timer
-    >                                   tick_pop_timer_ ;
-    boost::posix_time::time_duration    tick_interval_  ;
+    >                                   tick_pop_timer_     ;
+    boost::posix_time::time_duration    tick_interval_      ;
+    boost::asio::io_service&            ios_                ;
+    FwdConsumer<BinQueue>               basic_consumer_     ;
+    ObjectQueue*                        object_queue_       ;
 };
 
 }
