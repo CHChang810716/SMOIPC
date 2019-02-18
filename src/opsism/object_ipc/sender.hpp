@@ -6,6 +6,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include "spsc_object_queue.hpp"
 #include <opsism/utils/integer_serialize.hpp>
+#include <boost/asio.hpp>
 namespace opsism::object_ipc {
 
 template<class MplVector, std::size_t buffer_bytes>
@@ -23,8 +24,12 @@ struct Sender<boost::mpl::vector<T...>, buffer_bytes> {
     : ios_            (ios)
     , basic_producer_ (buffer->bin_queue_)
     , object_queue_   (buffer)
+    , wait_initial_   (false)
     {
-
+        object_queue_->require_reset_if_need(
+            object_queue_->producer_last_push_,
+            wait_initial_
+        );
     }
     template<class Obj>
     void async_send(Obj&& obj) {
@@ -35,26 +40,28 @@ struct Sender<boost::mpl::vector<T...>, buffer_bytes> {
         oa << type_id;
         oa << obj;
         auto b_data = os.str();
-        async_send_impl(b_data);
+        async_send_impl(std::move(b_data));
     }
 protected:
     void send_byte(const char& c) {
+        // TODO: check remote reset flag
         while(!basic_producer_.push(c)) {
             ios_.poll_one();
         }
         // TODO: timeout detection
     }
     void async_send_impl(std::string b_data) {
-        // make sure object queue is clean
-        while(object_queue_->send_object_size_ > 0) {
-            send_byte(0);
+        // make sure object queue is good
+        if(!object_queue_->reset_if_required(wait_initial_)) {
+            boost::asio::post(ios_, [this, bd = std::move(b_data)](){
+                async_send_impl(std::move(bd));
+            });
+            return;
         }
-        send_byte(char(0));
 
         // start send object
         std::size_t tid_object_size = b_data.size();
         auto tid_object_size_bin = utils::integer_serialize(tid_object_size);
-        // TODO: set shm: send object size
         for(auto&& c : tid_object_size_bin) {
             send_byte(c);
         }
@@ -66,6 +73,7 @@ protected:
     boost::asio::io_service&    ios_                ;
     FwdProducer<BinQueue>       basic_producer_     ;
     ObjectQueue*                object_queue_       ;
+    bool                        wait_initial_       ;
 };
 
 }
