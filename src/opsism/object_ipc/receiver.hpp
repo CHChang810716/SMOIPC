@@ -7,6 +7,7 @@
 #include <opsism/utils/event.hpp>
 #include <opsism/stream/fwd_consumer.hpp>
 #include <opsism/utils/integer_serialize.hpp>
+#include <opsism/utils/tick_event.hpp>
 namespace opsism::object_ipc {
 
 template<class... T>
@@ -30,13 +31,11 @@ struct Receiver<boost::mpl::vector<T...>, buffer_bytes>
         const boost::posix_time::time_duration&   intvl = boost::posix_time::millisec(50)
     )
     : Base            (tuple::FillConstruct<Base>::run(ios))
-    , tick_handler_   (this)
     , ios_            (ios)
-    , tick_pop_timer_ (new boost::asio::deadline_timer(ios))
-    , tick_interval_  (intvl)
     , basic_consumer_ (buffer->bin_queue_)
     , object_queue_   (buffer)
     , wait_initial_   (false)
+    , tick_event_     (ios, TickHandler(this), intvl)
     {
         object_queue_->require_reset_if_need(
             object_queue_->consumer_last_pop_,
@@ -65,11 +64,6 @@ protected:
         }
     }
     void async_recv_impl() {
-        // make sure object queue is good
-        if(!object_queue_->reset_if_required(wait_initial_)) {
-            // no need async recursive call, because receiver has tick timer.
-            return;
-        }
         std::vector<char> tid_object_size_bin(sizeof(std::size_t));
         for(auto& c : tid_object_size_bin){
             recv_byte(c);
@@ -92,20 +86,23 @@ protected:
         : inst_(inst)
         {}
         void operator()(const boost::system::error_code& ec) { // tick pop
-            inst_->async_recv_impl();
-            inst_->tick_pop_timer_->expires_from_now(inst_->tick_interval_);
-            inst_->tick_pop_timer_->async_wait(*this);
+            // make sure object queue is good
+            if(!object_queue_->reset_if_required(wait_initial_)) {
+                // no need async recursive call, because receiver has tick timer.
+                return;
+            }
+            if(object_queue_->bin_queue_.read_available() > 0) {
+                inst_->async_recv_impl();
+            }
         }
         This* inst_;
-    }                                   tick_handler_       ;
-    std::unique_ptr<
-        boost::asio::deadline_timer
-    >                                   tick_pop_timer_     ;
-    boost::posix_time::time_duration    tick_interval_      ;
+    };
     boost::asio::io_service&            ios_                ;
     FwdConsumer<BinQueue>               basic_consumer_     ;
     ObjectQueue*                        object_queue_       ;
     bool                                wait_initial_       ;
+
+    utils::TickEvent<TickHandler>       tick_event_         ;
 };
 
 }
