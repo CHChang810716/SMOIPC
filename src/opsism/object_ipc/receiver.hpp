@@ -8,6 +8,8 @@
 #include <opsism/stream/fwd_consumer.hpp>
 #include <opsism/utils/integer_serialize.hpp>
 #include <opsism/utils/tick_event.hpp>
+#include <opsism/type_id_to_object.hpp>
+#include <opsism/object_deserialize.hpp>
 namespace opsism::object_ipc {
 
 template<class... T>
@@ -71,14 +73,18 @@ protected:
         auto tid_object_size 
             = utils::integer_deserialize<std::size_t>(tid_object_size_bin);
         std::vector<char> tid_bin(sizeof(std::uint16_t));
-        std::vector<char> object_bin(tid_object_size - tid_bin.size());
+        std::string object_bin(tid_object_size - tid_bin.size());
         for(auto& c : tid_bin){
             recv_byte(c);
         }
         for(auto& c : object_bin){
             recv_byte(c);
         }
-        // TODO: doing object translate
+        auto tid = utils::integer_deserialize<std::uint16_t>(tid_bin);
+        TypeIdToObject<Type>::run(tid, [&object_bin, this](auto&& obj){
+            opsism::object_deserialize(obj, object_bin);
+            receive(obj);
+        });
 
     }
     struct TickHandler {
