@@ -20,15 +20,15 @@ struct TickEvent {
         tick_pop_timer_->expires_from_now(tick_interval_);
         tick_pop_timer_->async_wait(*this);
     }
-    void operator()(const boost::system::error_code& ec) const {
-        func_();
+    void operator()(const boost::system::error_code& ec) const{
+        func_(ec);
         tick_pop_timer_->expires_from_now(tick_interval_);
         tick_pop_timer_->async_wait(*this);
     }
 private:
     boost::asio::io_service&            ios_;
     Func                                func_;
-    std::unique_ptr<
+    std::shared_ptr<
         boost::asio::deadline_timer
     >                                   tick_pop_timer_     ;
     boost::posix_time::time_duration    tick_interval_      ;

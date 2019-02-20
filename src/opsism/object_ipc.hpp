@@ -7,13 +7,15 @@ using TypeList = boost::mpl::vector<Types...>;
 
 template<class Trait>
 struct ObjectIPC {
-    constexpr static auto buffer_bytes = Traits::buffer_bytes;
+    constexpr static auto buffer_bytes = Trait::buffer_bytes;
     using Receiver = opsism::object_ipc::Receiver<
-        Trait::ComTypes, buffer_bytes 
+        typename Trait::ComTypes, buffer_bytes 
     >;
     using Sender = opsism::object_ipc::Sender<
-        Trait::ComTypes, buffer_bytes
+        typename Trait::ComTypes, buffer_bytes
     >;
+    using ObjectQueue = object_ipc::SpscObjectQueue<buffer_bytes>;
 };
+#include "object_ipc/spsc_object_queue.hpp"
 
 }

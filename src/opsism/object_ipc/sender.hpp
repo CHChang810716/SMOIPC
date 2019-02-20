@@ -9,6 +9,7 @@
 #include <boost/asio.hpp>
 #include <boost/lockfree/queue.hpp>
 #include <opsism/utils/tick_event.hpp>
+#include <opsism/utils/mux_queue.hpp>
 namespace opsism::object_ipc {
 
 template<class MplVector, std::size_t buffer_bytes>
@@ -19,7 +20,7 @@ struct Sender<boost::mpl::vector<T...>, buffer_bytes> {
     using Type          = boost::mpl::vector<T...>;
     using ObjectQueue   = SpscObjectQueue<buffer_bytes>;
     using BinQueue      = typename ObjectQueue::BinQueue;
-    using TaskQueue     = boost::lockfree::queue<std::string>;
+    using TaskQueue     = opsism::utils::MuxQueue<std::string>;
     using This          = Sender<boost::mpl::vector<T...>, buffer_bytes>;
     Sender(
         ObjectQueue*                              buffer, 
@@ -27,7 +28,7 @@ struct Sender<boost::mpl::vector<T...>, buffer_bytes> {
         const boost::posix_time::time_duration&   intvl = boost::posix_time::millisec(50)
     )
     : ios_            (ios)
-    , basic_producer_ (buffer->bin_queue_)
+    , basic_producer_ (&(buffer->bin_queue_))
     , object_queue_   (buffer)
     , wait_initial_   (false)
     , task_queue_     (new TaskQueue())
@@ -75,7 +76,7 @@ protected:
         TickHandler(This* t)
         : inst(t)
         {}
-        void operator()() const {
+        void operator()() {
             // make sure object queue is good
             if(!object_queue_->reset_if_required(wait_initial_)) {
                 return;
@@ -89,7 +90,7 @@ protected:
         This* inst;
     };
     boost::asio::io_service&        ios_                ;
-    FwdProducer<BinQueue>           basic_producer_     ;
+    stream::FwdProducer<BinQueue>   basic_producer_     ;
     ObjectQueue*                    object_queue_       ;
     bool                            wait_initial_       ;
 

@@ -12,7 +12,7 @@ struct Event
     {}
 
     void signal(T&& obj) {
-        boost::asio::post(*ios_, [
+        ios_->post([
             this, tmp = std::move(obj)
         ]() mutable {
             slot_(tmp);            
