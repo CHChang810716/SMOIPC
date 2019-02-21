@@ -1,10 +1,8 @@
 #pragma once
-#include <boost/mpl/vector.hpp>
 #include <vector>
 #include <cstdint>
 #include <sstream>
 #include <boost/archive/binary_iarchive.hpp>
-#include <boost/mpl/size.hpp>
 namespace opsism {
 
 constexpr struct ObjectDeserialize {

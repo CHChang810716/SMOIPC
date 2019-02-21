@@ -1,7 +1,5 @@
 #pragma once
 #include <opsism/stream/fwd_producer.hpp>
-#include <boost/mpl/vector.hpp>
-#include <boost/mpl/find.hpp>
 #include <sstream>
 #include <boost/archive/binary_oarchive.hpp>
 #include "spsc_object_queue.hpp"
@@ -10,18 +8,19 @@
 #include <boost/lockfree/queue.hpp>
 #include <opsism/utils/tick_event.hpp>
 #include <opsism/utils/mux_queue.hpp>
+#include <opsism/mpl/type_list.hpp>
 namespace opsism::object_ipc {
 
 template<class MplVector, std::size_t buffer_bytes>
 struct Sender {};
 
 template<class... T, std::size_t buffer_bytes>
-struct Sender<boost::mpl::vector<T...>, buffer_bytes> {
-    using Type          = boost::mpl::vector<T...>;
+struct Sender<mpl::TypeList<T...>, buffer_bytes> {
+    using Type          = mpl::TypeList<T...>;
     using ObjectQueue   = SpscObjectQueue<buffer_bytes>;
     using BinQueue      = typename ObjectQueue::BinQueue;
     using TaskQueue     = opsism::utils::MuxQueue<std::string>;
-    using This          = Sender<boost::mpl::vector<T...>, buffer_bytes>;
+    using This          = Sender<Type, buffer_bytes>;
     Sender(
         ObjectQueue*                              buffer, 
         boost::asio::io_service&                  ios,
@@ -42,10 +41,9 @@ struct Sender<boost::mpl::vector<T...>, buffer_bytes> {
     }
     template<class Obj>
     void async_send(Obj&& obj) {
-        using Itr = typename boost::mpl::find<Type, Obj>::type;
         std::ostringstream os;
         boost::archive::binary_oarchive oa(os);
-        std::uint16_t type_id = Itr::pos::value;
+        std::uint16_t type_id = mpl::Find<Obj, Type>::value;
         oa << type_id;
         oa << obj;
         auto b_data = os.str();

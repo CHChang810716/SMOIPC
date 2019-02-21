@@ -3,7 +3,7 @@
 #include "object_ipc/sender.hpp"
 namespace opsism {
 template<class... Types>
-using TypeList = boost::mpl::vector<Types...>;
+using TypeList = mpl::TypeList<Types...>;
 
 template<class Trait>
 struct ObjectIPC {

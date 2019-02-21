@@ -2,8 +2,6 @@
 #include <tuple>
 #include <boost/asio.hpp>
 #include <opsism/tuple/fill_construct.hpp>
-#include <boost/mpl/vector.hpp>
-#include <boost/mpl/find.hpp>
 #include <opsism/utils/event.hpp>
 #include <opsism/stream/fwd_consumer.hpp>
 #include <opsism/utils/integer_serialize.hpp>
@@ -11,6 +9,7 @@
 #include <opsism/type_id_to_object.hpp>
 #include <opsism/object_deserialize.hpp>
 #include "spsc_object_queue.hpp"
+#include <opsism/mpl/type_list.hpp>
 namespace opsism::object_ipc {
 
 template<class... T>
@@ -20,10 +19,10 @@ template<class MplVector, std::size_t buffer_bytes>
 struct Receiver {};
 
 template<class... T, std::size_t buffer_bytes>
-struct Receiver<boost::mpl::vector<T...>, buffer_bytes> 
+struct Receiver<mpl::TypeList<T...>, buffer_bytes> 
 : public ReceiverBase<T...>
 {
-    using Type          = boost::mpl::vector<T...>;
+    using Type          = mpl::TypeList<T...>;
     using Base          = ReceiverBase<T...>;
     using ObjectQueue   = SpscObjectQueue<buffer_bytes>;
     using BinQueue      = typename ObjectQueue::BinQueue;
@@ -50,16 +49,14 @@ struct Receiver<boost::mpl::vector<T...>, buffer_bytes>
 
     template<class Obj, class Func>
     void on_received(Func&& func) {
-        using Itr = typename boost::mpl::find<Type, Obj>::type;
-        std::get<Itr::pos::value>(*this).set_slot(
+        std::get<mpl::Find<Obj, Type>::value>(*this).set_slot(
             std::forward<Func>(func)
         );
     }
 protected:
     template<class Obj>
     void receive(Obj&& obj) {
-        using Itr = typename boost::mpl::find<Type, Obj>::type;
-        std::get<Itr::pos::value>(*this).signal(std::move(obj));
+        std::get<mpl::Find<Obj, Type>::value>(*this).signal(std::move(obj));
     }
     void recv_byte(char& c) {
         while(!basic_consumer_.pop(c)) {
