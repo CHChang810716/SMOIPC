@@ -6,5 +6,6 @@ int main() {
     boost::asio::io_service io_context;
     IPCProto::Sender sender(queue, io_context);
     sender.async_send(std::string("hello world"));
-    io_context.run();
+    while(io_context.poll_one() > 0) {
+    }
 }

@@ -7,7 +7,6 @@
 #include <opsism/utils/integer_serialize.hpp>
 #include <opsism/utils/tick_event.hpp>
 #include <opsism/type_id_to_object.hpp>
-#include <opsism/object_deserialize.hpp>
 #include "spsc_object_queue.hpp"
 #include <opsism/mpl/type_list.hpp>
 namespace opsism::object_ipc {
@@ -70,18 +69,18 @@ protected:
         }
         auto tid_object_size 
             = utils::integer_deserialize.operator()<std::size_t>(tid_object_size_bin);
-        std::vector<char> tid_bin(sizeof(std::uint16_t));
-        std::string object_bin;
-        object_bin.resize(tid_object_size - tid_bin.size());
-        for(auto& c : tid_bin){
+        std::string b_data;
+        b_data.resize(tid_object_size);
+        for(auto& c : b_data) {
             recv_byte(c);
         }
-        for(auto& c : object_bin){
-            recv_byte(c);
-        }
-        auto tid = utils::integer_deserialize.operator()<std::uint16_t>(tid_bin);
-        TypeIdToObject<Type>::run(tid, [&object_bin, this](auto&& obj){
-            opsism::object_deserialize(obj, object_bin);
+        std::istringstream is;
+        is.str(b_data);
+        boost::archive::binary_iarchive bi(is);
+        std::uint16_t tid;
+        bi >> tid;
+        TypeIdToObject<Type>::run(tid, [&bi, this](auto&& obj){
+            bi >> obj;
             receive(std::move(obj));
         });
 

@@ -27,6 +27,13 @@ constexpr struct ObjectDeserialize {
         boost::archive::binary_iarchive bi(is);
         bi >> object;
     }
+    template<class Type>
+    void operator()(
+        Type& object,
+        boost::archive::binary_iarchive& bi
+     ) const {
+        bi >> object;
+    }
 } object_deserialize;
 
 }

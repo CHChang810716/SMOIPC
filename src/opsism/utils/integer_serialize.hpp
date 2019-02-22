@@ -19,8 +19,8 @@ constexpr struct IntegerDeserialize {
         Int res = 0;
         for(auto itr = bin.rbegin(); itr != bin.rend(); itr ++) {
             auto& c = *itr;
-            res = res | c;
             res = res << 8;
+            res = res | c;
         }
         return res;
     }
