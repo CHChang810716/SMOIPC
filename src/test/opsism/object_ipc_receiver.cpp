@@ -1,4 +1,4 @@
-#include "com_trait.hpp"
+#include "object_ipc/com_trait.hpp"
 #include <opsism/shm/client.hpp>
 int main() {
     opsism::shm::Client shm_client("object_ipc_test", 65535);

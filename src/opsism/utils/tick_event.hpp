@@ -20,7 +20,7 @@ struct TickEvent {
         tick_pop_timer_->expires_from_now(tick_interval_);
         tick_pop_timer_->async_wait(*this);
     }
-    void operator()(const boost::system::error_code& ec) const{
+    void operator()(const boost::system::error_code& ec) {
         func_(ec);
         tick_pop_timer_->expires_from_now(tick_interval_);
         tick_pop_timer_->async_wait(*this);

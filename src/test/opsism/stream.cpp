@@ -51,7 +51,7 @@ TEST(opsism_stream, fwd_real_ipc_shm_test) {
     );
     auto queue = segment.find_or_construct<ShmIntBuffer>("queue")();
 
-    auto producer_path = boost::dll::program_location().parent_path() / "opsism-stream_test_fwd_producer";
+    auto producer_path = boost::dll::program_location().parent_path() / "test-opsism-stream_fwd_producer";
     boost::process::child producer(producer_path.string(), 
         boost::process::std_out > boost::process::null, 
         boost::process::std_err > boost::process::null 

@@ -74,9 +74,9 @@ protected:
         TickHandler(This* t)
         : inst(t)
         {}
-        void operator()() {
+        void operator()(const boost::system::error_code& ec) {
             // make sure object queue is good
-            if(!object_queue_->reset_if_required(wait_initial_)) {
+            if(!inst->object_queue_->reset_if_required(inst->wait_initial_)) {
                 return;
             }
             if(inst->task_queue_->pop(curr_task)) {

@@ -49,14 +49,14 @@ struct Receiver<mpl::TypeList<T...>, buffer_bytes>
 
     template<class Obj, class Func>
     void on_received(Func&& func) {
-        std::get<mpl::Find<Obj, Type>::value>(*this).set_slot(
+        std::get<mpl::Find<std::decay_t<Obj>, Type>::value>(*this).set_slot(
             std::forward<Func>(func)
         );
     }
 protected:
     template<class Obj>
     void receive(Obj&& obj) {
-        std::get<mpl::Find<Obj, Type>::value>(*this).signal(std::move(obj));
+        std::get<mpl::Find<std::decay_t<Obj>, Type>::value>(*this).signal(std::move(obj));
     }
     void recv_byte(char& c) {
         while(!basic_consumer_.pop(c)) {
@@ -82,7 +82,7 @@ protected:
         auto tid = utils::integer_deserialize.operator()<std::uint16_t>(tid_bin);
         TypeIdToObject<Type>::run(tid, [&object_bin, this](auto&& obj){
             opsism::object_deserialize(obj, object_bin);
-            receive(obj);
+            receive(std::move(obj));
         });
 
     }

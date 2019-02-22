@@ -14,7 +14,7 @@ constexpr struct Visitor {
     }
 } visitor;
 TEST(opsism_type_id_to_object, basic_test) {
-    using Types = boost::mpl::vector< 
+    using Types = opsism::mpl::TypeList< 
         std::size_t, char, std::string 
     >;
     std::stringstream ss;
