@@ -14,9 +14,16 @@ TEST(smoipc_object_ipc, basic_test) {
     );
     boost::asio::io_service io_context;
     IPCProto::Receiver receiver(queue, io_context);
-    receiver.on_received<std::string>([](auto&& str){
+    std::size_t recv_obj_num = 0;
+    receiver.on_received<std::string>([&](auto&& str){
+        recv_obj_num ++;
         EXPECT_EQ(str, "hello world");
     });
-    while(io_context.poll_one() > 0) {
+    receiver.on_received<std::int64_t>([&](auto&& n){
+        recv_obj_num ++;
+        EXPECT_EQ(n, 77777);
+    });
+    while(recv_obj_num < 2) {
+        io_context.poll_one();
     }
 }

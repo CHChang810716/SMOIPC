@@ -50,6 +50,9 @@ struct Sender<mpl::TypeList<T...>, buffer_bytes> {
         // async_send_impl(std::move(b_data));
         task_queue_->push(std::move(b_data));
     }
+    auto pending_tasks() {
+        return task_queue_->size();
+    }
 protected:
     void send_byte(const char& c) {
         // TODO: check remote reset flag
