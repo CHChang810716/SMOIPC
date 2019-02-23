@@ -74,16 +74,19 @@ protected:
         for(auto& c : b_data) {
             recv_byte(c);
         }
-        std::istringstream is;
-        is.str(b_data);
-        boost::archive::binary_iarchive bi(is);
-        std::uint16_t tid;
-        bi >> tid;
-        TypeIdToObject<Type>::run(tid, [&bi, this](auto&& obj){
-            bi >> obj;
-            receive(std::move(obj));
-        });
-
+        char check_good;
+        recv_byte(check_good);
+        if(check_good == 1) {
+            std::istringstream is;
+            is.str(b_data);
+            boost::archive::binary_iarchive bi(is);
+            std::uint16_t tid;
+            bi >> tid;
+            TypeIdToObject<Type>::run(tid, [&bi, this](auto&& obj){
+                bi >> obj;
+                receive(std::move(obj));
+            });
+        }
     }
     struct TickHandler {
         TickHandler(This* inst) 
